@@ -336,7 +336,7 @@ function saveFileAsGpx(){
 	let writeFilNam = prompt( "ファイル名" );
 	if (!writeFilNam ) return;
 	let writeTex = '<?xml version="1.0" encoding="UTF-8"?>\n';
-	writeTex += '<gpx version="1.0" creator=" " xmlns="http://www.topografix.com/GPX/1/0">\n';
+	writeTex += '<gpx version="1.0" creator="https://github.com/guchi999/GPXfromGsiVcector/tree/main" xmlns="http://www.topografix.com/GPX/1/0">\n';
 	writeTex += `<trk>\n<name>${ writeFilNam }</name>\n<trkseg>\n`;
 	let trkptTmp = "";
 	for ( let i = 0; i < fixTrkDat.length; i++ ){
