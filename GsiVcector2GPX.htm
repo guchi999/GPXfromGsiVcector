@@ -42,7 +42,7 @@
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
 </head>
 <body>
-	<span><b>GsiVector2GPX V1.0</b></span>
+	<span><b>GsiVector2GPX V1.1</b></span>
 	<label for="mapCenter">　　　　　地図を移動: </label>
 	<input type="text" id="mapCenter" size="30"   value="">
 	<input type="button" onclick="mapMove()" value="移動">
@@ -199,9 +199,14 @@ async function get_vecTile(tileNameTxt){
 			}else{
 				console.log( "error " + reqs.status );
 				if ( reqs.status === 404 ){
-					WrtMsg1('<span style="color:red;"><b>地理院サーバーにデータがありません</b></span>');
+					WrtMsg1('<span style="color:mediumblue;"><b>地理院サーバーにデータがありません</b></span>');
 					setTimeout( () => {  WrtMsg1("");}, 1000 );
 				}
+				if ( reqs.status === 429 ){
+					WrtMsg1('<span style="color:red;"><b>少し間をおいて地図をクリックしてください</b></span>');
+					setTimeout( () => {  WrtMsg1("");}, 2000 );
+				}
+				
 			}
 		}
 	};
