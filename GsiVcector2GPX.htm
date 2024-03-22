@@ -42,7 +42,7 @@
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
 </head>
 <body>
-	<span><b>GsiVector2GPX V1.1</b></span>
+	<span><b>GsiVector2GPX V1.2</b></span>
 	<label for="mapCenter">　　　　　地図を移動: </label>
 	<input type="text" id="mapCenter" size="30"   value="">
 	<input type="button" onclick="mapMove()" value="移動">
@@ -249,7 +249,7 @@ function draw_trackLine( trkName, trkLatLon, tColor ){
 // 選択確定後の処理
 function select_fix(){
 	if ( selectTrak.length < 2 ) return;
-	if (fixTrkDat.length != 0 ) return;
+	if ( LLayerOutImage.length != 0 ) clr_outpu_image();
 	for ( let i = 0; i < selectTrak.length; i++ ){
 		let tailNam = selectTrak[i].split("-")[0], trackNum = Number( selectTrak[i].split("-")[1] );
 		fixTrkDat.push( trackDat[ tailNam ][trackNum ].slice() );
