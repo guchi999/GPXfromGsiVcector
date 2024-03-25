@@ -163,10 +163,15 @@ function chk_vecTile(lat, lon, zoom){
 		get_vecTile( tileName );
 	}else if ( LLayerTrack.hasOwnProperty(tileName) === false ){
 		// タイルが在ってもtrackが表示されてなければ再描画、ライン上書き対策の選択ラインの消去/再描画、出力イメージはクリア
-		if ( fixTrkDat.length != 0 )  clr_outpu_image();
 		if ( selectTrak.some(element => element.includes(tileName)) ) clr_select(0);
 		json2Line( tileName );
 		if ( selectTrak.some(element => element.includes(tileName)) ) reDrw_selectLine();
+		if ( fixTrkDat.length != 0 ){
+			let fixTrkDatTmp = fixTrkDat.slice();
+			clr_outpu_image();
+			 fixTrkDat = fixTrkDatTmp.slice();
+			outpu_image();
+		}
 	}
 }
 
