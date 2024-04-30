@@ -17,7 +17,7 @@ https://maps.gsi.go.jp/development/vt.html
 
 改版履歴
 
-V1.3
+V1.3　2024/04/30
 
 ・選択トラックと確定ラインの色を変更（地図に同色の道があるので）
 
