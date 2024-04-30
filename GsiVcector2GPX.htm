@@ -42,7 +42,7 @@
 	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
 </head>
 <body>
-	<span><b>GsiVector2GPX V1.2</b></span>
+	<span><b>GsiVector2GPX V1.3</b></span>
 	<label for="mapCenter">　　　　　地図を移動: </label>
 	<input type="text" id="mapCenter" size="30"   value="">
 	<input type="button" onclick="mapMove()" value="移動">
@@ -52,7 +52,7 @@
 
 	<div id="menue">
 		<li id ="menue1"><a href="javascript:void(0);" onclick="clr_track()">track表示クリア</a></li>
-		<li id ="menue2"><a href="javascript:void(0);" onclick="clr_select(1)">ルート選択クリア</a></li>
+		<li id ="menue2"><a href="javascript:void(0);" onclick="clr_select()">ルート選択クリア</a></li>
 		<li id ="menue3"><a href="javascript:void(0);" onclick="select_fix()">ルート確定</a></li>
 		<li id ="menue4"><a href="javascript:void(0);" onclick="clr_outpu_image()">確定ルート取消</a></li>
 		<li id ="menue5"><a href="javascript:void(0);" onClick="saveFile()" >ルート保存</a></li>
@@ -71,12 +71,11 @@ var LLayerTrack = {}; // 各タイルのtrackラインleafletレイヤー { 'zoo
 var selectTrak = []; // 選択track[ "zoom/tilX/tileY-n",,,, ]
 var LLayerSelect = []; // 選択trackの leafletレイヤー
 var fixTrkDat = []; // 確定trackのlatlonデーター
-var LLayerfix = []; // 確定trackの leafletレイヤー
 var LLayerOutImage = []; // 出力イメージ
+
 const WrtMsg1 = (str) =>{ document.getElementById("message1").innerHTML = str}; 
 let inputForcas = document.getElementById("mapCenter");
 inputForcas.addEventListener( "click", function(){ this.select(); }, false );
-
 document.getElementById("mapWin1").style.cursor = "crosshair";
 document.getElementById("mapCenter").value = lat +","+ lon;
 DrwMap();
@@ -107,7 +106,7 @@ function TrackClick(e){
 		let trackNum =  Number( lineTitl.split('-')[1] );
 		let latlon = trackDat[tileName][trackNum].slice();
 		let trkName =  "S-" + lineTitl;
-		LLayerSelect.push( draw_trackLine( trkName, latlon, 'yellow' ) );
+		LLayerSelect.push( draw_trackLine( trkName, latlon, "#ffec00" ) ); // yellow系
 	}
 }
 
@@ -122,14 +121,14 @@ function celect_cancel(lineName){
 	LLayerSelect.splice( remv, 1 );
 }
 
-// 選択トラックの再表示
-function reDrw_selectLine(){
+// 選択トラックの表示
+function drw_selectLine(){
 	for ( let i = 0; i < selectTrak.length; i++ ){
 		let tileName = selectTrak[i].split('-')[0];
 		let trackNum =  Number( selectTrak[i].split('-')[1] );
 		let latlon = trackDat[tileName][trackNum].slice();
 		let trkName =  "S-" + selectTrak[i];
-		LLayerSelect.push( draw_trackLine( trkName, latlon, 'yellow' ) );
+		LLayerSelect.push( draw_trackLine( trkName, latlon, "#ffec00" ) ); // yellow系
 	}
 }
 
@@ -138,7 +137,19 @@ function MapClick(e){
 	lat = e.latlng.lat;
 	lon = e.latlng.lng;
 	zoom = 16;
-	chk_vecTile(lat, lon, zoom);
+	let tileInfo = latLon2tile( lat, lon, zoom );
+	let tileName = `${ zoom }/${ tileInfo.tx }/${ tileInfo.ty }`;
+	if ( vecTile.hasOwnProperty(tileName) === false ){ // lat, lon を含むタイルがvecTileにあるかチェック、無ければダウンロード
+		get_vecTile( tileName );
+	}else if ( LLayerTrack.hasOwnProperty(tileName) === false ){
+		// タイルが在ってもtrackが表示されてなければ再描画、ライン上書き対策の選択ラインの消去/再描画、出力イメージはクリア
+		json2Line( tileName );
+		if ( selectTrak.some(element => element.includes(tileName)) ) {
+			erase_selectLine();
+			drw_selectLine();
+		}
+		if ( fixTrkDat.length != 0 ){ outpu_image(); }
+	}
 }
 
 //地図右クリックでtrackを消去
@@ -155,25 +166,6 @@ function MapRightClick(e){
 	delete LLayerTrack[tileName];
 }
 
-// lat, lon を含むタイルがvecTileにあるかチェック、無ければダウンロード
-function chk_vecTile(lat, lon, zoom){
-	let tileInfo = latLon2tile( lat, lon, zoom );
-	let tileName = `${ zoom }/${ tileInfo.tx }/${ tileInfo.ty }`;
-	if ( vecTile.hasOwnProperty(tileName) === false ){
-		get_vecTile( tileName );
-	}else if ( LLayerTrack.hasOwnProperty(tileName) === false ){
-		// タイルが在ってもtrackが表示されてなければ再描画、ライン上書き対策の選択ラインの消去/再描画、出力イメージはクリア
-		if ( selectTrak.some(element => element.includes(tileName)) ) clr_select(0);
-		json2Line( tileName );
-		if ( selectTrak.some(element => element.includes(tileName)) ) reDrw_selectLine();
-		if ( fixTrkDat.length != 0 ){
-			let fixTrkDatTmp = fixTrkDat.slice();
-			clr_outpu_image();
-			 fixTrkDat = fixTrkDatTmp.slice();
-			outpu_image();
-		}
-	}
-}
 
 // 緯度,経度,ズームレベルからタイル、ピクセル座標を求める 返値：{ tx:タイルX, ty:タイルY, px:ピクセルX, py:ピクセルY };
 function latLon2tile(latVal, lonVal, zoomVal){ 
@@ -283,7 +275,8 @@ function select_fix(){
 		if ( E2E < E2B ){ fixTrkDat[ i+1 ].reverse(); }
 	}
 	clr_track();
-	clr_select(0);
+	erase_selectLine();
+	drw_selectLine();
 	outpu_image();
 }
 
@@ -297,20 +290,30 @@ function clr_track(){
 	LLayerTrack = {};
 }
 
-// 選択ライン消去 clrFlg = 0 : 選択トラックは消去しない、clrFlg = 1 : 選択トラックも消去
-function clr_select( clrFlg ){
+// ルート選択クリア
+function clr_select(){
+	erase_selectLine();
+	selectTrak = [];
+}
+
+// 選択ラインの消去
+function erase_selectLine(){
 	for ( let i = 0; i < LLayerSelect.length; i++ ){
 		for ( let j = 0; j < 3; j++ ) { mymap.removeLayer( LLayerSelect[i][j] ); }
 	}
 	LLayerSelect = [];
-	if ( clrFlg != 0 ){ selectTrak = []; }
 }
+
 
 // 出力ルート描画
 function outpu_image(){
+	if ( LLayerOutImage.length != 0 ){
+		for ( let i = 0; i < 3; i++ ) { mymap.removeLayer( LLayerOutImage[i] ); }
+		LLayerOutImage = [];
+	}
 	let outDat = [];
 	for ( let i = 0; i < fixTrkDat.length; i++ ){ outDat = outDat.concat( fixTrkDat[i] ); }
-	LLayerOutImage = draw_trackLine( "outImage", outDat, "#ff3300" ); // red
+	LLayerOutImage = draw_trackLine( "outImage", outDat, "#ea5532" ); // red
 }
 
 // 出力ルート消去、選択トラック再描画
@@ -320,7 +323,6 @@ function clr_outpu_image(){
 	for ( let i = 0; i < 3; i++ ) { mymap.removeLayer( LLayerOutImage[i] ); }
 	LLayerOutImage = [];
 	fixTrkDat = [];
-	reDrw_selectLine();
 }
 
 // 2つの緯度、経度から２点間の距離を求める
